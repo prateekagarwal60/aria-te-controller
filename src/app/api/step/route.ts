@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { fresh } from "@/lib/fresh";
 import { sql, money } from "@/lib/db";
 import {
   runGather, runCorroborate, runDecide,
@@ -31,11 +31,11 @@ export async function POST(req: Request) {
       const c: any = await sql`select transaction_id from cases where id = ${caseId}`;
       if (!c.length) {
         const n: any = await sql`select count(*)::int as n from cases`;
-        return NextResponse.json({ ok: false, error:
+        return fresh({ ok: false, error:
           `No charge called ${caseId} in this database, which holds ${n[0].n}. ` +
           `If the screen is showing it, this request reached a different database.` }, { status: 404 });
       }
-      return NextResponse.json({ ok: false, error:
+      return fresh({ ok: false, error:
         `${caseId} points at charge ${c[0].transaction_id}, which is not in this database.` },
         { status: 404 });
     }
@@ -52,7 +52,7 @@ export async function POST(req: Request) {
       await sql`update cases set status='working' where id=${caseId}`;
       const { assembled, receipt, read } = await runGather(caseId, txn);
       await sql`update cases set assembled=${JSON.stringify({ ...assembled, receipt_snapshot: receipt })} where id=${caseId}`;
-      return NextResponse.json({ ok: true, step, result: assembled, read, next: "corroborate" });
+      return fresh({ ok: true, step, result: assembled, read, next: "corroborate" });
     }
 
     if (step === "corroborate") {
@@ -61,7 +61,7 @@ export async function POST(req: Request) {
       const inv = await runCorroborate(caseId, txn, receipt, assembled);
       await sql`update cases set investigation=${JSON.stringify(inv)}, risk_band=${inv.risk_band},
                 risk_score=${inv.risk_score} where id=${caseId}`;
-      return NextResponse.json({ ok: true, step, result: inv, read: inv.read, next: "decide" });
+      return fresh({ ok: true, step, result: inv, read: inv.read, next: "decide" });
     }
 
     if (step === "decide") {
@@ -70,7 +70,7 @@ export async function POST(req: Request) {
       await sql`update cases set adjudication=${JSON.stringify(adj)}, verdict=${adj.verdict},
                 confidence=${adj.confidence}, amount_allowed=${money(adj.amount_allowed ?? txn.amount_inr)},
                 policy_version=${adj.policy_version} where id=${caseId}`;
-      return NextResponse.json({ ok: true, step, result: adj, read: adj.read, next: "authorise" });
+      return fresh({ ok: true, step, result: adj, read: adj.read, next: "authorise" });
     }
 
     if (step === "authorise") {
@@ -105,15 +105,15 @@ export async function POST(req: Request) {
         }
         await sql`update cases set status='escalated' where id=${caseId}`;
         await appendDecision(caseId, "escalated", { reasons: gate.reasons, mode: gate.mode, verdict: adj.verdict, confidence: adj.confidence });
-        return NextResponse.json({ ok: true, step, result: gate, read: gateRead, next: null, outcome: "escalated" });
+        return fresh({ ok: true, step, result: gate, read: gateRead, next: null, outcome: "escalated" });
       }
 
       if (gate.action === "REJECT") {
         await sql`update cases set status='rejected', closed_at=now() where id=${caseId}`;
         await appendDecision(caseId, "disallowed", { amount_inr: txn.amount_inr, merchant: txn.merchant, reasoning: adj.reasoning, clauses: adj.clauses });
-        return NextResponse.json({ ok: true, step, result: gate, read: gateRead, next: null, outcome: "rejected" });
+        return fresh({ ok: true, step, result: gate, read: gateRead, next: null, outcome: "rejected" });
       }
-      return NextResponse.json({ ok: true, step, result: gate, read: gateRead, next: "post", outcome: "approved" });
+      return fresh({ ok: true, step, result: gate, read: gateRead, next: "post", outcome: "approved" });
     }
 
     if (step === "post") {
@@ -131,21 +131,21 @@ export async function POST(req: Request) {
           values (${caseId}, 'Journal entry did not balance and was not posted.',
                   'The coding step produced unbalanced lines. Confirm the correct treatment.',
                   ${closing.rationale || null})`;
-        return NextResponse.json({ ok: true, step, result: closing, next: null, outcome: "escalated" });
+        return fresh({ ok: true, step, result: closing, next: null, outcome: "escalated" });
       }
       const entry = await writeToLedger(caseId, closing);
       await sql`update cases set closing=${JSON.stringify({ ...closing, entry_ref: entry.entry_ref })},
                 status='settled', closed_at=now() where id=${caseId}`;
       await appendDecision(caseId, "posted", { entry_ref: entry.entry_ref, lines: closing.lines, totals: closing.totals });
-      return NextResponse.json({ ok: true, step, result: { ...closing, entry_ref: entry.entry_ref }, read: closing.read, next: null, outcome: "settled" });
+      return fresh({ ok: true, step, result: { ...closing, entry_ref: entry.entry_ref }, read: closing.read, next: null, outcome: "settled" });
     }
 
-    return NextResponse.json({ ok: false, error: "Unknown step." }, { status: 400 });
+    return fresh({ ok: false, error: "Unknown step." }, { status: 400 });
   } catch (e: any) {
-    return NextResponse.json({ ok: false, error: e.message, step }, { status: 200 });
+    return fresh({ ok: false, error: e.message, step }, { status: 200 });
   }
 }
 
 export async function GET() {
-  return NextResponse.json({ steps: ORDER });
+  return fresh({ steps: ORDER });
 }

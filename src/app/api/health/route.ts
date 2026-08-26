@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { fresh } from "@/lib/fresh";
 import { sql } from "@/lib/db";
 import { think, MODEL } from "@/lib/anthropic";
 
@@ -41,12 +41,12 @@ export async function GET() {
       detail: `${host} · ${counts[0].charges} charges, ${counts[0].cases} cases, schema ${counts[0].schema}` });
   } catch (e: any) {
     out.checks.push({ name: "database", ok: false, detail: e.message });
-    return NextResponse.json({ ok: false, ...out });
+    return fresh({ ok: false, ...out });
   }
 
   if (!process.env.ANTHROPIC_API_KEY) {
     out.checks.push({ name: "api key", ok: false, detail: "ANTHROPIC_API_KEY is not set." });
-    return NextResponse.json({ ok: false, ...out });
+    return fresh({ ok: false, ...out });
   }
   out.checks.push({ name: "api key", ok: true, detail: "present" });
 
@@ -82,8 +82,8 @@ export async function GET() {
         ? "The account is out of credit."
         : undefined,
     });
-    return NextResponse.json({ ok: false, ...out });
+    return fresh({ ok: false, ...out });
   }
 
-  return NextResponse.json({ ok: out.checks.every((c: any) => c.ok), ...out });
+  return fresh({ ok: out.checks.every((c: any) => c.ok), ...out });
 }

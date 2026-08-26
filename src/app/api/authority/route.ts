@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { fresh } from "@/lib/fresh";
 import { sql } from "@/lib/db";
 
 export const runtime = "nodejs";
@@ -7,7 +7,7 @@ export const maxDuration = 60;
 
 export async function GET() {
   const rows: any = await sql`select * from authority where id = 1`;
-  return NextResponse.json({ ok: true, authority: rows[0] });
+  return fresh({ ok: true, authority: rows[0] });
 }
 
 export async function POST(req: Request) {
@@ -21,5 +21,5 @@ export async function POST(req: Request) {
     can_reject         = ${b.can_reject},
     updated_at = now() where id = 1`;
   const rows: any = await sql`select * from authority where id = 1`;
-  return NextResponse.json({ ok: true, authority: rows[0] });
+  return fresh({ ok: true, authority: rows[0] });
 }

@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { fresh } from "@/lib/fresh";
 import { sql } from "@/lib/db";
 
 export const runtime = "nodejs";
@@ -24,5 +24,5 @@ export async function GET() {
     group by jl.account_code, ga.name, ga.type order by jl.account_code`;
   const totals: any = await sql`
     select coalesce(sum(debit),0) as debit, coalesce(sum(credit),0) as credit from journal_lines`;
-  return NextResponse.json({ ok: true, entries, lines, trialBalance: tb, totals: totals[0] });
+  return fresh({ ok: true, entries, lines, trialBalance: tb, totals: totals[0] });
 }

@@ -30,6 +30,7 @@ const COVERED = [
   ["coverage",  "Which agents the evaluation actually exercises, derived from the source. A slide claimed two of six were unscored when it was four, because the number was written from memory and nothing checked it."],
   ["matching",  "A receipt is matched on the date printed on it, not the date the row arrived. Filtering on arrival meant five of ten seeded receipts did not match, and a receipt uploaded late never would."],
   ["liveness",  "A row never claims an outcome the workpaper cannot draw. Patching a row's status locally while leaving the decision unpatched made a charge read as settled beside an empty panel."],
+  ["caching",   "Every API response refuses to be cached. An edge network kept a copy of the queue and served it back after the database was emptied, so eighteen charges appeared on a screen whose database held none."],
   ["invariance","That the policy-invariance matrix actually discriminates. A matrix where every rulebook expects the same verdict proves nothing and fails here."],
   ["bootstrap", "The onboarding round trip: saved policy, books and people come back in the shape the forms render. Replace replaces. The agent is not hired until commit."],
   ["paths",     "Card charge and reimbursement differ in evidence and in accounting treatment, in the data rather than only in the prose."],

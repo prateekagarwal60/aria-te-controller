@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { fresh } from "@/lib/fresh";
 import { sql, newId } from "@/lib/db";
 import { think, Block } from "@/lib/anthropic";
 import { contentHash } from "@/lib/agents/signals";
@@ -47,7 +47,7 @@ export async function POST(req: Request) {
     } else if (b.raw_text) {
       content = [{ type: "text", text: `Read this receipt.\n\n${b.raw_text}` }];
     } else {
-      return NextResponse.json({ ok: false, error: "Send an image or receipt text." }, { status: 400 });
+      return fresh({ ok: false, error: "Send an image or receipt text." }, { status: 400 });
     }
 
     const { json } = await think({ agent: "read", system: EXTRACT_SYSTEM, content, maxTokens: 2000 });
@@ -66,8 +66,8 @@ export async function POST(req: Request) {
               ${b.image_b64 ? String(b.image_b64).slice(0, 400000) : null}, ${b.media || null},
               ${JSON.stringify(json)}, ${hash}, ${spend})`;
 
-    return NextResponse.json({ ok: true, id, extracted: json, priorSubmissions: prior });
+    return fresh({ ok: true, id, extracted: json, priorSubmissions: prior });
   } catch (e: any) {
-    return NextResponse.json({ ok: false, error: e.message }, { status: 200 });
+    return fresh({ ok: false, error: e.message }, { status: 200 });
   }
 }

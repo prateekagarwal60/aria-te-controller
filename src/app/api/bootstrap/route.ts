@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { fresh } from "@/lib/fresh";
 import { sql } from "@/lib/db";
 import { SCHEMA_VERSION } from "@/lib/schema";
 import { migrate } from "@/lib/migrate";
@@ -25,17 +25,17 @@ export async function POST() {
      separately and had already drifted: only this one filled in a column the other
      had just added. */
   const r = await migrate(sql, (m) => console.log(`[bootstrap] ${m}`));
-  if (r.error) return NextResponse.json({ ok: false, error: `Could not prepare the database. ${r.error}` }, { status: 200 });
+  if (r.error) return fresh({ ok: false, error: `Could not prepare the database. ${r.error}` }, { status: 200 });
 
   try {
     await sql`insert into company (id) values (1) on conflict do nothing`;
     await sql`insert into authority (id) values (1) on conflict do nothing`;
     await sql`update company set schema_version = ${SCHEMA_VERSION} where id = 1`;
     const c: any = await sql`select onboarded_at from company where id = 1`;
-    return NextResponse.json({
+    return fresh({
       ok: true, onboarded: !!c[0]?.onboarded_at, schema: SCHEMA_VERSION, backfilled: r.backfilled,
     });
   } catch (e: any) {
-    return NextResponse.json({ ok: false, error: `Could not prepare the database: ${e.message}` }, { status: 200 });
+    return fresh({ ok: false, error: `Could not prepare the database: ${e.message}` }, { status: 200 });
   }
 }

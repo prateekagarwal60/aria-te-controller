@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { fresh } from "@/lib/fresh";
 import { sql } from "@/lib/db";
 import * as S from "@/lib/seed";
 import { spendDateFrom } from "@/lib/dates";
@@ -38,7 +38,7 @@ export async function GET() {
       select id, name, email, grade, department, cost_center, manager_name
       from employees order by id`;
 
-    return NextResponse.json({
+    return fresh({
       ok: true, company: c[0] || null, counts: counts[0], authority: a[0] || null,
       onboarded: !!c[0]?.onboarded_at,
       current: {
@@ -53,7 +53,7 @@ export async function GET() {
       sampleTeam: S.EMPLOYEES,
     });
   } catch (e: any) {
-    return NextResponse.json({ ok: false, error: e.message, needsBootstrap: true });
+    return fresh({ ok: false, error: e.message, needsBootstrap: true });
   }
 }
 
@@ -167,7 +167,7 @@ export async function POST(req: Request) {
 
       case "commit": {
         const gaps = await missingPieces();
-        if (gaps.length) return NextResponse.json({ ok: false, error: `Still missing: ${gaps.join(", ")}.` });
+        if (gaps.length) return fresh({ ok: false, error: `Still missing: ${gaps.join(", ")}.` });
         await sql`update company set onboarded_at = now() where id = 1`;
         return ok();
       }
@@ -187,9 +187,9 @@ export async function POST(req: Request) {
         return ok();
       }
     }
-    return NextResponse.json({ ok: false, error: "Unknown step." }, { status: 400 });
+    return fresh({ ok: false, error: "Unknown step." }, { status: 400 });
   } catch (e: any) {
-    return NextResponse.json({ ok: false, error: e.message }, { status: 200 });
+    return fresh({ ok: false, error: e.message }, { status: 200 });
   }
 }
 
@@ -202,7 +202,7 @@ async function ok() {
       (select count(*)::int from cost_centers)    as centers,
       (select count(*)::int from policy_versions) as policies,
       (select count(*)::int from transactions)    as charges`;
-  return NextResponse.json({ ok: true, company: c[0], counts: counts[0], missing: await missingPieces() });
+  return fresh({ ok: true, company: c[0], counts: counts[0], missing: await missingPieces() });
 }
 
 async function missingPieces() {

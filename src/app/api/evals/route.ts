@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { fresh } from "@/lib/fresh";
 import { sql } from "@/lib/db";
 import { think } from "@/lib/anthropic";
 
@@ -9,7 +9,7 @@ export const dynamic = "force-dynamic";
 export async function GET() {
   const cases: any = await sql`select * from eval_cases order by id`;
   const runs: any = await sql`select * from eval_runs order by started_at desc limit 10`;
-  return NextResponse.json({ ok: true, cases, runs });
+  return fresh({ ok: true, cases, runs });
 }
 
 /**
@@ -74,12 +74,12 @@ Return JSON: {"verdict":"APPROVE"|"REJECT"|"ESCALATE","confidence":0.0-1.0,"clau
         avg_latency_ms=${avg}, total_cost_usd=${cost} where id=${run}`;
     }
 
-    return NextResponse.json({
+    return fresh({
       ok: true, runId: run, results, done,
       progress: { done: offset + cases.length, total: total[0].n },
       policyVersion: pol[0].version,
     });
   } catch (e: any) {
-    return NextResponse.json({ ok: false, error: e.message }, { status: 200 });
+    return fresh({ ok: false, error: e.message }, { status: 200 });
   }
 }

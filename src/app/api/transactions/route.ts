@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { fresh } from "@/lib/fresh";
 import { sql, newId, money } from "@/lib/db";
 
 export const runtime = "nodejs";
@@ -44,9 +44,9 @@ export async function POST(req: Request) {
           values (${receiptId}, ${b.employee_id}, 'upload', ${b.receipt_text}, ${hash})`;
       }
     }
-    return NextResponse.json({ ok: true, id, caseId, receiptId });
+    return fresh({ ok: true, id, caseId, receiptId });
   } catch (e: any) {
-    return NextResponse.json({ ok: false, error: e.message }, { status: 200 });
+    return fresh({ ok: false, error: e.message }, { status: 200 });
   }
 }
 
@@ -54,5 +54,5 @@ export async function DELETE(req: Request) {
   const { id } = await req.json();
   await sql`delete from cases where transaction_id = ${id}`;
   await sql`delete from transactions where id = ${id}`;
-  return NextResponse.json({ ok: true });
+  return fresh({ ok: true });
 }

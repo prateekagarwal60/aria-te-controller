@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { fresh } from "@/lib/fresh";
 import { sql } from "@/lib/db";
 import { appendDecision } from "@/lib/agents/guardrails";
 
@@ -21,14 +21,14 @@ export async function POST(req: Request) {
   const { caseId, agreed, note } = await req.json();
   try {
     const rows: any = await sql`select id, status, verdict from cases where id = ${caseId}`;
-    if (!rows.length) return NextResponse.json({ ok: false, error: "No such charge." }, { status: 404 });
+    if (!rows.length) return fresh({ ok: false, error: "No such charge." }, { status: 404 });
 
     await sql`update cases set reviewed_at = now(), review_agreed = ${!!agreed},
               review_note = ${note || null} where id = ${caseId}`;
     await appendDecision(caseId, agreed ? "review_agreed" : "review_disagreed",
       { was: rows[0].verdict, note: note || null });
 
-    if (agreed) return NextResponse.json({ ok: true, reopened: false });
+    if (agreed) return fresh({ ok: true, reopened: false });
 
     /* Disagreement reopens the charge as something waiting on you, using the same
        route any escalation takes, so a reversal lands in the ledger and the
@@ -41,8 +41,8 @@ export async function POST(req: Request) {
                 ${null}, ${rows[0].verdict})`;
     }
     await sql`update cases set status = 'escalated' where id = ${caseId}`;
-    return NextResponse.json({ ok: true, reopened: true });
+    return fresh({ ok: true, reopened: true });
   } catch (e: any) {
-    return NextResponse.json({ ok: false, error: e.message }, { status: 200 });
+    return fresh({ ok: false, error: e.message }, { status: 200 });
   }
 }

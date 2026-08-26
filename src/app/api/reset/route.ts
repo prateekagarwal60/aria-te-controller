@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { fresh } from "@/lib/fresh";
 import { sql } from "@/lib/db";
 
 export const runtime = "nodejs";
@@ -20,5 +20,5 @@ export async function POST(req: Request) {
   await sql`update cases set status='queued', verdict=null, confidence=null, risk_band=null, risk_score=null,
             amount_allowed=null, assembled=null, investigation=null, adjudication=null, closing=null,
             authority=null, closed_at=null`;
-  return NextResponse.json({ ok: true });
+  return fresh({ ok: true });
 }

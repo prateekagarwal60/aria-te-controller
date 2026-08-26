@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { fresh } from "@/lib/fresh";
 import { sql } from "@/lib/db";
 import { operatingState } from "@/lib/agents/guardrails";
 import { SCHEMA_VERSION } from "@/lib/schema";
@@ -17,12 +17,12 @@ export async function GET() {
        the schema was only applied when a query had already failed. Anything added
        after the first bootstrap silently did not exist. */
     if (!co.length || Number(co[0].schema_version ?? 0) < SCHEMA_VERSION) {
-      return NextResponse.json({ ok: false, needsBootstrap: true,
+      return fresh({ ok: false, needsBootstrap: true,
         error: `Database is at schema ${co[0]?.schema_version ?? 0}, this build needs ${SCHEMA_VERSION}.` });
     }
     if (!co.length || !co[0].onboarded_at) {
       const emp: any = await sql`select * from employees order by name`;
-      return NextResponse.json({ ok: true, onboarded: false, company: co[0] || null, employees: emp });
+      return fresh({ ok: true, onboarded: false, company: co[0] || null, employees: emp });
     }
 
     const cases: any = await sql`
@@ -74,7 +74,7 @@ export async function GET() {
     let governance: any = null;
     try { governance = { state: await operatingState() }; } catch {}
 
-    return NextResponse.json({
+    return fresh({
       ok: true, onboarded: true, company: co[0], cases, escalations, governance,
       policy: policy[0] || null, policyHistory,
       authority: authority[0] || null,
@@ -84,6 +84,6 @@ export async function GET() {
       caseRuns,
     });
   } catch (e: any) {
-    return NextResponse.json({ ok: false, error: e.message, needsBootstrap: true }, { status: 200 });
+    return fresh({ ok: false, error: e.message, needsBootstrap: true }, { status: 200 });
   }
 }

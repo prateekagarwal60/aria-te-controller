@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { fresh } from "@/lib/fresh";
 import { sql } from "@/lib/db";
 
 export const runtime = "nodejs";
@@ -7,7 +7,7 @@ export const maxDuration = 60;
 
 export async function GET() {
   const rows: any = await sql`select * from policy_versions order by version desc limit 1`;
-  return NextResponse.json({ ok: true, policy: rows[0] || null });
+  return fresh({ ok: true, policy: rows[0] || null });
 }
 
 /** A policy edit creates a new version. Nothing is overwritten, so every past
@@ -17,5 +17,5 @@ export async function POST(req: Request) {
   const cur: any = await sql`select coalesce(max(version),0) as v from policy_versions`;
   const next = Number(cur[0].v) + 1;
   await sql`insert into policy_versions (version, body, note) values (${next}, ${body}, ${note || "Edited in console"})`;
-  return NextResponse.json({ ok: true, version: next });
+  return fresh({ ok: true, version: next });
 }

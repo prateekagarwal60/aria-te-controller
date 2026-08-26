@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { fresh } from "@/lib/fresh";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
@@ -19,9 +19,9 @@ export async function POST(req: Request) {
   if (!matches(String(password || ""), expected())) {
     // A pause, so the form cannot be hammered quickly.
     await new Promise((r) => setTimeout(r, 700));
-    return NextResponse.json({ ok: false, error: "That is not the password." }, { status: 401 });
+    return fresh({ ok: false, error: "That is not the password." }, { status: 401 });
   }
-  const res = NextResponse.json({ ok: true });
+  const res = fresh({ ok: true });
   res.cookies.set({
     name: "aria_pass",
     value: expected(),
@@ -35,7 +35,7 @@ export async function POST(req: Request) {
 }
 
 export async function DELETE() {
-  const res = NextResponse.json({ ok: true });
+  const res = fresh({ ok: true });
   res.cookies.set({ name: "aria_pass", value: "", path: "/", maxAge: 0 });
   return res;
 }

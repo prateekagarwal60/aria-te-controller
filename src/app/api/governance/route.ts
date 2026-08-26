@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { fresh } from "@/lib/fresh";
 import { sql } from "@/lib/db";
 import { operatingState, verifyChain } from "@/lib/agents/guardrails";
 
@@ -29,9 +29,9 @@ export async function GET() {
         count(*) filter (where status = 'escalated')::int as escalated
       from cases where confidence is not null group by bucket order by bucket`;
 
-    return NextResponse.json({ ok: true, state, chain, events, recent, log, calibration: calib });
+    return fresh({ ok: true, state, chain, events, recent, log, calibration: calib });
   } catch (e: any) {
-    return NextResponse.json({ ok: false, error: e.message }, { status: 200 });
+    return fresh({ ok: false, error: e.message }, { status: 200 });
   }
 }
 
@@ -44,8 +44,8 @@ export async function POST(req: Request) {
       await sql`update authority set trace_enabled = ${b.trace_enabled}, updated_at = now() where id = 1`;
     if (b.daily_spend_cap_usd !== undefined)
       await sql`update authority set daily_spend_cap_usd = ${b.daily_spend_cap_usd}, updated_at = now() where id = 1`;
-    return NextResponse.json({ ok: true, state: await operatingState() });
+    return fresh({ ok: true, state: await operatingState() });
   } catch (e: any) {
-    return NextResponse.json({ ok: false, error: e.message }, { status: 200 });
+    return fresh({ ok: false, error: e.message }, { status: 200 });
   }
 }

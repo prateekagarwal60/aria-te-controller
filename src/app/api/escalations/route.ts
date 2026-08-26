@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { fresh } from "@/lib/fresh";
 import { sql, money } from "@/lib/db";
 import { think } from "@/lib/anthropic";
 import { appendDecision } from "@/lib/agents/guardrails";
@@ -12,7 +12,7 @@ export async function GET() {
     select es.*, c.transaction_id, t.merchant, t.amount_inr, t.txn_date
     from escalations es join cases c on c.id = es.case_id
     join transactions t on t.id = c.transaction_id order by es.created_at desc`;
-  return NextResponse.json({ ok: true, escalations: rows });
+  return fresh({ ok: true, escalations: rows });
 }
 
 /**
@@ -28,7 +28,7 @@ export async function POST(req: Request) {
              t.merchant, t.amount_inr, t.currency, t.amount, t.txn_date, t.memo, t.source
       from escalations es join cases c on c.id = es.case_id
       join transactions t on t.id = c.transaction_id where es.id = ${escalationId}`;
-    if (!rows.length) return NextResponse.json({ ok: false, error: "No such escalation." }, { status: 404 });
+    if (!rows.length) return fresh({ ok: false, error: "No such escalation." }, { status: 404 });
     const e = rows[0];
 
     /* Decided once, at the top, before anything is written or learned from.
@@ -96,12 +96,12 @@ Return JSON:
     if (verdict === "REJECT") {
       await sql`update cases set status='rejected', verdict='REJECT', amount_allowed=0,
         closed_at=now() where id=${e.case_id}`;
-      return NextResponse.json({ ok: true, precedent, caseId: e.case_id, verdict, readyToClose: false });
+      return fresh({ ok: true, precedent, caseId: e.case_id, verdict, readyToClose: false });
     }
     await sql`update cases set status='queued', verdict=${verdict}, amount_allowed=${allowed}
       where id=${e.case_id}`;
-    return NextResponse.json({ ok: true, precedent, caseId: e.case_id, verdict, readyToClose: true });
+    return fresh({ ok: true, precedent, caseId: e.case_id, verdict, readyToClose: true });
   } catch (err: any) {
-    return NextResponse.json({ ok: false, error: err.message }, { status: 200 });
+    return fresh({ ok: false, error: err.message }, { status: 200 });
   }
 }
