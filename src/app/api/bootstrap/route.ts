@@ -11,6 +11,15 @@ export const maxDuration = 60;
  * An agent that arrives already holding a queue nobody gave it is a demo.
  * Everything the agent knows comes from onboarding, which is /api/onboard.
  */
+/* Reachable from a browser as well as from the console.
+ *
+ * A deployment sat on an empty database with no way to set it up: the console
+ * bootstraps itself on load, but if that has not happened there was nothing a
+ * person could open to force it. Opening this address does the same work. */
+export async function GET() {
+  return POST();
+}
+
 export async function POST() {
   /* One routine, shared with the evaluation runner. They used to apply the schema
      separately and had already drifted: only this one filled in a column the other
