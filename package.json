@@ -1,0 +1,35 @@
+{
+  "name": "aria-te-controller",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint test/ scripts/",
+    "test": "npm run lint && npm run eval:build && node test/sqlcheck.mjs && node test/sqlscan.mjs && node test/json.mjs && node test/hints.mjs && node test/guardrails.mjs && node test/trust.mjs && node test/harness.mjs && node test/evalready.mjs && node test/scoring.mjs && node test/truncation.mjs && node test/args.mjs && node test/verdict.mjs && node test/frozen.mjs && node test/display.mjs && node test/upgrade.mjs && node test/copy.mjs && node test/auth.mjs && node test/value.mjs && node test/assurance.mjs && node test/queue.mjs && node test/liveness.mjs && node test/nav.mjs && node test/migrate.mjs && node test/startup.mjs && node test/confidence.mjs && node test/escalation.mjs && node test/gates.mjs && node test/coverage.mjs && node test/matching.mjs && node test/invariance.mjs && npx esbuild src/lib/seed.ts --bundle --format=esm --platform=node --outfile=/tmp/seed.mjs && node test/bootstrap.mjs && node test/paths.mjs && node test/summary.mjs",
+    "eval:build": "npx esbuild src/lib/agents/index.ts --bundle --format=esm --platform=node --packages=external --outfile=.evalbuild/agents.mjs && npx esbuild src/lib/db.ts --bundle --format=esm --platform=node --packages=external --outfile=.evalbuild/db.mjs && npx esbuild src/lib/anthropic.ts --bundle --format=esm --platform=node --packages=external --outfile=.evalbuild/anthropic.mjs && npx esbuild src/lib/agents/guardrails.ts --bundle --format=esm --platform=node --packages=external --outfile=.evalbuild/guardrails.mjs && npx esbuild src/components/TrustStrip.tsx --bundle --format=esm --platform=node --packages=external --jsx=automatic --outfile=.evalbuild/trust.mjs && npx esbuild src/lib/schema.ts --bundle --format=esm --platform=node --packages=external --outfile=.evalbuild/schema.mjs && npx esbuild src/lib/seed.ts --bundle --format=esm --platform=node --packages=external --outfile=.evalbuild/seed.mjs && npx esbuild src/lib/migrate.ts --bundle --format=esm --platform=node --packages=external --outfile=.evalbuild/migrate.mjs",
+    "eval": "npm run lint && npm run eval:build && node --env-file=.env.local test/eval/run.mjs",
+    "db:reset": "node scripts/db-reset.mjs",
+    "fresh": "node scripts/db-reset.mjs"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.32.1",
+    "@neondatabase/serverless": "^0.10.4",
+    "next": "14.2.18",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  },
+  "devDependencies": {
+    "@electric-sql/pglite": "^0.5.7",
+    "@types/node": "^22.9.0",
+    "@types/react": "^18.3.12",
+    "@types/react-dom": "^18.3.1",
+    "autoprefixer": "^10.4.20",
+    "eslint": "^9.39.5",
+    "globals": "^17.11.0",
+    "postcss": "^8.4.49",
+    "tailwindcss": "^3.4.15",
+    "typescript": "^5.6.3"
+  }
+}
