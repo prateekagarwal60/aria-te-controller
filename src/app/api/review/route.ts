@@ -4,6 +4,7 @@ import { appendDecision } from "@/lib/agents/guardrails";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+export const maxDuration = 60;
 
 /**
  * Spot checking a charge she settled on her own.

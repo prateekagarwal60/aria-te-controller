@@ -3,6 +3,7 @@ import { sql, newId, money } from "@/lib/db";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+export const maxDuration = 60;
 
 const FX: Record<string, number> = { INR: 1, USD: 87.4, SGD: 64.98, AED: 23.0, EUR: 94.6, GBP: 111.2 };
 

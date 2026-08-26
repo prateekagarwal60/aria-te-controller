@@ -14,9 +14,31 @@ export const dynamic = "force-dynamic";
 export async function GET() {
   const out: any = { model: MODEL, checks: [] };
 
+  /* Which database this request actually reached, and what is in it.
+   *
+   * A deployment where the queue loaded but nothing would run turned out to be
+   * unanswerable from the outside: the same page, the same code, two different
+   * results. Opening this on both and comparing the host and the counts settles
+   * it in one look rather than several rounds of guessing. */
   try {
-    const r: any = await sql`select count(*)::int as n from transactions`;
-    out.checks.push({ name: "database", ok: true, detail: `${r[0].n} charges in the corpus` });
+    const url = process.env.DATABASE_URL || "";
+    const host = (url.match(/@([^/?]+)/) || [])[1] || "not set";
+    const dbName = (url.match(/\/([^/?]+)\?/) || [])[1] || "unknown";
+    out.database = { host, name: dbName };
+
+    const counts: any = await sql`
+      select
+        (select count(*)::int from transactions) as charges,
+        (select count(*)::int from cases)        as cases,
+        (select count(*)::int from employees)    as people,
+        (select count(*)::int from receipts)     as receipts,
+        (select coalesce(max(schema_version), 0)::int from company) as schema`;
+    const sample: any = await sql`select id, status from cases order by id limit 3`;
+    out.database.contents = counts[0];
+    out.database.firstCases = sample.map((c: any) => `${c.id} (${c.status})`);
+
+    out.checks.push({ name: "database", ok: true,
+      detail: `${host} · ${counts[0].charges} charges, ${counts[0].cases} cases, schema ${counts[0].schema}` });
   } catch (e: any) {
     out.checks.push({ name: "database", ok: false, detail: e.message });
     return NextResponse.json({ ok: false, ...out });

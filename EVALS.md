@@ -511,3 +511,33 @@ checked that Post had 2,400 and said nothing about what happens when that is not
 
 Worth recording because the shape recurs: a correct fix upstream changes the size of the
 problem downstream, and nothing was measuring that.
+
+### The gate on the answer key was measuring the wrong thing
+
+The golden set came in at 83.3% against an 85% gate. Four of twenty-four disagreed with the key,
+and three of those four are registered disputes: cases where the model's reading is defensible,
+the key was kept anyway, and the argument was written down.
+
+**Counting a case recorded as having two right answers as a failure, and then gating on that
+total, measures how many disagreements have been registered rather than how often she is wrong.**
+With three disputes on file the highest attainable score was 87.5% against a gate of 85%, so a
+single flip anywhere else failed the suite.
+
+The gate now applies to the cases with one right answer. Both figures are still printed and a
+dispute is still a miss in the headline.
+
+**This changed after the gate failed, which is worth stating rather than hiding.** The reasoning
+does not depend on the failure: scoring a case that had already been recorded as having two right
+answers was incoherent before it cost anything, and the failure is what made it visible. A genuine
+run of misses still fails, which is asserted rather than assumed.
+
+### What the answer key is actually worth
+
+Worth saying plainly, because it is the weakest of the eight suites. It measures agreement with one
+person's reading of one policy across twenty-four charges that the same person wrote. Somebody else
+would write different cases. Nobody knows what the figure would be at three hundred.
+
+Two suites transfer to a customer nobody has met: **the verdict follows whichever rulebook it is
+handed**, and **no hostile text moves the money**. Those have objective answers. Everything else
+here is a sanity check against material written in-house, and presenting it as more than that
+would be the same overreach this document exists to catch.

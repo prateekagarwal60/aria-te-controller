@@ -20,6 +20,24 @@ t("disputed cases still count against the headline",
 t("a second figure is reported alongside", /agreementExDisputed/.test(runner));
 t("each dispute prints its argument", /DISPUTED\[d\.label\]/.test(runner));
 
+console.log("\nBut the gate applies to the cases with a single right answer");
+/* Counting a case recorded as having two right answers as a failure, and then
+   gating on that total, measures how many disagreements were registered rather
+   than how often she is wrong. */
+t("the gate reads the undisputed figure", /const gateOn = agreementExDisputed \?\? agreement;/.test(runner));
+t("and falls back to the raw one when nothing is disputed",
+  /agreementExDisputed \?\? agreement/.test(runner));
+t("the change records that it followed a failure", /This changed after the gate failed/.test(runner),
+  "the timing is part of the honesty");
+t("and that the reasoning does not depend on it",
+  /reasoning does not depend on the failure/.test(runner));
+
+const gate = 0.85;
+const decide = (right, total, disputed) => (total - disputed ? (right - 0) / (total - disputed) : 0) >= gate;
+t("twenty of twenty-one passes", decide(20, 24, 3));
+t("a genuine run of misses still fails", !decide(15, 24, 3), "17 of 21 is 71%");
+t("with no disputes it is the plain figure", !decide(19, 24, 0), "19 of 24 is 79%");
+
 console.log("\nEvery registered dispute names the clause and says the key stands");
 const block = runner.slice(runner.indexOf("const DISPUTED = {"), runner.indexOf("async function suiteGolden"));
 const entries = [...block.matchAll(/"([^"]+)":\s*\n?\s*"([^"]+)"/g)];

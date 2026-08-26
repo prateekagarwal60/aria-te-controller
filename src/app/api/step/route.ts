@@ -22,7 +22,23 @@ export async function POST(req: Request) {
     const rows: any = await sql`
       select c.*, t.* , c.id as case_id, c.status as case_status
       from cases c join transactions t on t.id = c.transaction_id where c.id = ${caseId}`;
-    if (!rows.length) return NextResponse.json({ ok: false, error: "No such case." }, { status: 404 });
+    if (!rows.length) {
+      /* The lookup is a join, so an empty result means the case is missing, or the
+         charge it points at is, or the request reached a different database from
+         the one the screen was drawn from. "No such case" could not tell them
+         apart, which made a deployment pointing at the wrong database look
+         identical to a corrupt row. */
+      const c: any = await sql`select transaction_id from cases where id = ${caseId}`;
+      if (!c.length) {
+        const n: any = await sql`select count(*)::int as n from cases`;
+        return NextResponse.json({ ok: false, error:
+          `No charge called ${caseId} in this database, which holds ${n[0].n}. ` +
+          `If the screen is showing it, this request reached a different database.` }, { status: 404 });
+      }
+      return NextResponse.json({ ok: false, error:
+        `${caseId} points at charge ${c[0].transaction_id}, which is not in this database.` },
+        { status: 404 });
+    }
 
     const row = rows[0];
     const txn = {

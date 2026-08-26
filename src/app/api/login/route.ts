@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 
 export const runtime = "nodejs";
+export const maxDuration = 60;
 
 function expected() {
   return process.env.ARIA_PASSWORD || "prateekema26";

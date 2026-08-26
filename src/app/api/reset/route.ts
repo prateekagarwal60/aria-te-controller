@@ -3,6 +3,7 @@ import { sql } from "@/lib/db";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+export const maxDuration = 60;
 
 /** Re-queues work without destroying the precedent book, so you can re-run the
  *  same corpus against an edited policy and watch the outcomes move. */
