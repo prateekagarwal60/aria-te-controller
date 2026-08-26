@@ -16,7 +16,17 @@ export const dynamic = "force-dynamic";
  * authority to do any.
  */
 
-export async function GET() {
+export async function GET(req: Request) {
+  /* Openable in a browser with ?step=reset, so the raw reply can be read without
+     the console in the way. A failing erase looked identical to a working one,
+     because the button threw the reply away and reloaded regardless. */
+  if (new URL(req.url).searchParams.get("step") === "reset") {
+    return POST(new Request(req.url, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ step: "reset" }),
+    }));
+  }
   try {
     const c: any = await sql`select * from company where id = 1`;
     const counts: any = await sql`

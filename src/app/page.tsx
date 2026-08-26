@@ -616,8 +616,10 @@ function Escalations({ state, reload, say }: any) {
                              amountAllowed: allowed, resolvedBy: "Corporate Controller" }),
     }).then((x) => x.json()).catch(() => ({ ok: false, error: "Could not reach the server." }));
     if (r.ok && r.readyToClose) {
-      await fetch("/api/step", { method: "POST", headers: { "content-type": "application/json" },
-        body: JSON.stringify({ caseId: r.caseId, step: "post" }) });
+      const posted = await fetch("/api/step", { method: "POST", headers: { "content-type": "application/json" },
+        body: JSON.stringify({ caseId: r.caseId, step: "post" }) })
+        .then((x) => x.json()).catch((e) => ({ ok: false, error: String(e?.message || e) }));
+      if (!posted?.ok) say(`Recorded, but the entry did not post. ${posted?.error || ""}`);
     }
     await reload();
     setWorking(null);
@@ -841,15 +843,19 @@ function Policy({ state, reload, say }: any) {
 
   const save = async () => {
     setSaving(true);
-    await fetch("/api/policy", { method: "POST", headers: { "content-type": "application/json" },
-      body: JSON.stringify({ body, note: note || "Edited in console" }) });
+    const r = await fetch("/api/policy", { method: "POST", headers: { "content-type": "application/json" },
+      body: JSON.stringify({ body, note: note || "Edited in console" }) })
+      .then((x) => x.json()).catch((e) => ({ ok: false, error: String(e?.message || e) }));
+    if (!r?.ok) { setSaving(false); return say(`Not published. ${r?.error || "The server did not confirm it."}`); }
     await reload(); setSaving(false); setNote("");
     say("Policy published. Re-run any charge and Aria will apply the new text.");
   };
 
   const requeue = async () => {
-    await fetch("/api/reset", { method: "POST", headers: { "content-type": "application/json" },
-      body: JSON.stringify({ scope: "cases" }) });
+    const r = await fetch("/api/reset", { method: "POST", headers: { "content-type": "application/json" },
+      body: JSON.stringify({ scope: "cases" }) })
+      .then((x) => x.json()).catch((e) => ({ ok: false, error: String(e?.message || e) }));
+    if (!r?.ok) return say(`Nothing was re-queued. ${r?.error || "The server did not confirm it."}`);
     await reload();
     say("Every charge is back in the queue. Work it again against the new policy.");
   };
@@ -1035,13 +1041,17 @@ function Stat2({ label, value }: { label: string; value: string }) {
 
 /* ------------------------------- Governance ------------------------------- */
 function Governance({ say }: any) {
+  const [erasing, setErasing] = useState(false);
+  const [eraseError, setEraseError] = useState<string | null>(null);
   const [d, setD] = useState<any>(null);
   const load = async () => setD(await fetch("/api/governance", { cache: "no-store" }).then((r) => r.json()));
   useEffect(() => { load(); }, []);
 
   const set = async (patch: any) => {
-    await fetch("/api/governance", { method: "POST", headers: { "content-type": "application/json" },
-      body: JSON.stringify(patch) });
+    const r = await fetch("/api/governance", { method: "POST", headers: { "content-type": "application/json" },
+      body: JSON.stringify(patch) })
+      .then((x) => x.json()).catch((e) => ({ ok: false, error: String(e?.message || e) }));
+    if (!r?.ok) return say(`Not saved. ${r?.error || "The server did not confirm it."}`);
     await load();
     say("Applied. It takes effect on the next case she picks up.");
   };
@@ -1096,12 +1106,23 @@ function Governance({ say }: any) {
             <div className="flex items-center gap-3">
               <Btn tone="ghost" onClick={async () => {
                 if (!confirm("This erases the hire, the policy, the books, the people and all work. Walk onboarding again?")) return;
-                await fetch("/api/onboard", { method: "POST", headers: { "content-type": "application/json" },
-                  body: JSON.stringify({ step: "reset" }) });
+                setErasing(true); setEraseError(null);
+                /* The reply used to be discarded and the page reloaded regardless,
+                   so a failed erase was indistinguishable from a successful one:
+                   the same screen came back either way. */
+                const r = await fetch("/api/onboard", { method: "POST", headers: { "content-type": "application/json" },
+                  body: JSON.stringify({ step: "reset" }) })
+                  .then((x) => x.json())
+                  .catch((e) => ({ ok: false, error: String(e?.message || e) }));
+                setErasing(false);
+                if (!r || r.ok !== true) { setEraseError(r?.error || "The server did not confirm it."); return; }
                 location.reload();
-              }}>Erase everything and re-hire</Btn>
+              }} disabled={erasing}>{erasing ? "Erasing…" : "Erase everything and re-hire"}</Btn>
               <span className="text-[11.5px] text-graphite">Takes you back through onboarding.</span>
             </div>
+            {eraseError && (
+              <p className="text-[12.5px] text-flagged mt-2">Nothing was erased. {eraseError}</p>
+            )}
           </div>
 
           <div className="border-t border-rule pt-3">
@@ -1201,7 +1222,9 @@ function Terms({ state, reload, say }: any) {
   if (!a) return null;
 
   const save = async () => {
-    await fetch("/api/authority", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(a) });
+    const r = await fetch("/api/authority", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(a) })
+      .then((x) => x.json()).catch((e) => ({ ok: false, error: String(e?.message || e) }));
+    if (!r?.ok) return say(`Not saved. ${r?.error || "The server did not confirm it."}`);
     await reload(); say("Terms updated. They apply to the next decision she makes.");
   };
 

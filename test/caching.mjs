@@ -43,5 +43,29 @@ t("GET is handled", /export async function GET\(\)/.test(boot),
   "a deployment on an empty database had no way for a person to set it up");
 t("it does the same work as POST", /return POST\(\);/.test(boot));
 
+console.log("\nA destructive action reads its reply");
+/* Three of these have now been found: the review button, the erase button, and
+   the bootstrap call. Each fired a request, threw the answer away, and carried on
+   as though it had worked. */
+const page = fs.readFileSync("src/app/page.tsx", "utf8");
+t("erase checks what came back", /if \(!r \|\| r\.ok !== true\)/.test(page));
+t("and says so rather than reloading", /Nothing was erased\./.test(page));
+t("it does not reload on failure",
+  /if \(!r \|\| r\.ok !== true\) \{ setEraseError[\s\S]{0,80}return; \}\s*\n\s*location\.reload\(\);/.test(page),
+  "the reload used to happen either way");
+t("the button shows it is working", /erasing \? "Erasing…"/.test(page));
+
+console.log("\nAnd it can be triggered from a browser to see the raw reply");
+const ob = fs.readFileSync("src/app/api/onboard/route.ts", "utf8");
+t("GET accepts ?step=reset", /searchParams\.get\("step"\) === "reset"/.test(ob));
+t("which runs the same code as the button", /body: JSON\.stringify\(\{ step: "reset" \}\)/.test(ob));
+
+console.log("\nNo request in the console discards its reply");
+const discarded = [...page.matchAll(/await fetch\([^;]{0,400}?\);/gs)]
+  .map((m) => m[0])
+  .filter((c) => !/\.then\(|\.json\(\)|const |= await/.test(c));
+t("every fetch is read or deliberately fire-and-forget", discarded.length <= 2,
+  `${discarded.length} not obviously read`);
+
 console.log(bad ? `\n${bad} FAILED\n` : "\nAll good\n");
 process.exit(bad ? 1 : 0);
